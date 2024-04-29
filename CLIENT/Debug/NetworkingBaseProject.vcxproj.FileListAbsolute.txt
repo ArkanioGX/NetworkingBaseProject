@@ -1,3 +1,0 @@
-C:\Users\Marie\Documents\Dev\NetworkingBaseProject\Debug\NetworkingBaseProject.exe
-C:\Users\Marie\Documents\Dev\NetworkingBaseProject\CLIENT\Debug\SimpleClient.exe
-C:\Users\marie.legrand\Documents\Dev\Fork\NetworkingBaseProject\CLIENT\Debug\SimpleClient.exe
