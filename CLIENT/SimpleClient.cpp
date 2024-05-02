@@ -23,6 +23,7 @@ const std::string DELIMITER = "/|||/";
 void add(std::string* sOut, std::string s2);
 std::string parse(std::string s1, int infPos);
 infoType getInfoType(std::string s1);
+std::string Receive(TCPsocket tcp, bool pause);
 
 std::unordered_map<std::string, infoType> const infoTable = { 
 	{"nn",infoType::iNickname},
@@ -98,19 +99,13 @@ int main(int argc, char* argv[]) {
 		ClearBackground(GRAY);
 		DrawText("Welcome to ChArtFX!", 220, 15, 25, WHITE);
 		DrawRectangle(20, 50, SCREEN_WIDTH - 40, SCREEN_HEIGHT - 150, DARKGRAY);
-		 /*
-		char buffer[1024];
-		int bytesRead = SDLNet_TCP_Recv(clientSocket, buffer, sizeof(buffer));
-		std::string bf = std::string(buffer);
-		if (bytesRead > 0) {
-			
-			if (getInfoType(bf) == infoType::iMessage) {
-				Message m;
-				m.nickname = parse(bf, 1);
-				m.content = parse(bf, 2);
-				log.push_back(m);
+		
+		std::string msg = Receive(clientSocket, false);
+		if (msg.compare("") != 0) {
+			if (getInfoType(msg) == infoType::iMessage) {
+				log.push_back(Message{ parse(msg,1), parse(msg,2) });
 			}
-		}*/
+		}
 
 		for (int msg = 0; msg < log.size(); msg++)
 		{
@@ -129,8 +124,12 @@ int main(int argc, char* argv[]) {
 			if (IsKeyPressed(KEY_BACKSPACE)) typing.pop_back();
 			else if (IsKeyPressed(KEY_ENTER))
 			{
-				int bytesSent = SDLNet_TCP_Send(clientSocket, typing.c_str(), typing.length() + 1);
-				if (bytesSent < typing.length() + 1) {
+				string msg;
+				add(&msg, "msg");
+				add(&msg, nickname);
+				add(&msg, typing);
+				int bytesSent = SDLNet_TCP_Send(clientSocket, msg.c_str(), msg.length() + 1);
+				if (bytesSent < msg.length() + 1) {
 					cerr << "SDLNet TCP Send error: " << SDLNet_GetError() << endl;
 					SDLNet_TCP_Close(clientSocket);
 					SDLNet_Quit();
@@ -183,5 +182,17 @@ infoType getInfoType(std::string s1) {
 	return infoType::Unknown;
 }
 
+std::string Receive(TCPsocket tcp, bool pause) {
+	SDLNet_SocketSet socketSet = SDLNet_AllocSocketSet(1);
+	SDLNet_AddSocket(socketSet, reinterpret_cast<SDLNet_GenericSocket>(tcp));
+	if (SDLNet_CheckSockets(socketSet, 0) != 0 || pause) {
+		char buffer[1024];
+		int bytesRead = SDLNet_TCP_Recv(tcp, buffer, sizeof(buffer));
+		if (bytesRead > 0) {
+			return std::string(buffer);
+		}
+	}
+	return "";
+}
 
 

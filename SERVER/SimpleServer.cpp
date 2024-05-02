@@ -15,10 +15,6 @@ struct User {
 	string nickname;
 	TCPsocket socket;
 
-	inline bool operator==(const TCPsocket tcp) {
-		return socket == tcp;
-	}
-
 };
 
 enum infoType { Unknown, iNickname, iMessage };
@@ -30,6 +26,7 @@ std::string parse(std::string s1, int infPos);
 infoType getInfoType(std::string s1);
 void Send(TCPsocket tcp, std::string s);
 std::string Receive(TCPsocket tcp, bool pause);
+bool UserHasAlreadyJoined(TCPsocket tcp, std::vector<User*> l);
 
 std::unordered_map<std::string, infoType> const infoTable = {
 	{"nn",infoType::iNickname},
@@ -67,7 +64,7 @@ int main(int argc, char* argv[]) {
 		if (clientSocket) {
 			char buffer[1024];
 
-			if (std::find(userList.begin(),userList.end(),clientSocket) != userList.end()) {
+			if (!UserHasAlreadyJoined(clientSocket,userList)) {
 				cout << "New User Joined" << endl;
 				std::string bf = Receive(clientSocket,true);
 				string nick = "";
@@ -119,7 +116,7 @@ int main(int argc, char* argv[]) {
 		for (int i = 0; i < userList.size(); i++)
 		{
 			string bf = Receive(userList[i]->socket, false);
-			if (bf.compare("") == 0) {
+			if (bf.compare("") != 0) {
 				if (getInfoType(bf) == infoType::iMessage) {
 					for (int j = 0; j < userList.size(); j++)
 					{
@@ -134,6 +131,15 @@ int main(int argc, char* argv[]) {
 
 
 	return 0;
+}
+
+bool UserHasAlreadyJoined(TCPsocket tcp, std::vector<User*> l) {
+	for (User* usr : l) {
+		if (usr->socket == tcp) {
+			return true;
+		}
+	}
+	return false;
 }
 
 void add(std::string* sOut, std::string s2) {
@@ -182,4 +188,5 @@ std::string Receive(TCPsocket tcp,bool pause) {
 			return std::string(buffer);
 		}
 	}
+	return "";
 }
