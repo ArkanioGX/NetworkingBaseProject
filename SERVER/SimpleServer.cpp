@@ -20,11 +20,12 @@ struct User {
 enum infoType { Unknown, iNickname, iMessage };
 
 const std::string DELIMITER = "/|||/";
+std::vector<User*> userList;
 
 void add(std::string* sOut, std::string s2);
 std::string parse(std::string s1, int infPos);
 infoType getInfoType(std::string s1);
-void Send(TCPsocket tcp, std::string s);
+void Send(User* u, std::string s);
 std::string Receive(TCPsocket tcp, bool pause);
 bool UserHasAlreadyJoined(TCPsocket tcp, std::vector<User*> l);
 
@@ -56,7 +57,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	std::vector<User*> userList;
+	
 
 	TCPsocket clientSocket;
 	while (true) {
@@ -80,7 +81,7 @@ int main(int argc, char* argv[]) {
 				add(&bufferContent, nick + " joined the chat");
 				for (int i = 0; i < userList.size(); i++)
 				{
-					Send(userList[i]->socket, bufferContent);
+					Send(userList[i], bufferContent);
 				}
 				
 			}
@@ -121,7 +122,7 @@ int main(int argc, char* argv[]) {
 					for (int j = 0; j < userList.size(); j++)
 					{
 						if (i != j) {
-							Send(userList[j]->socket, bf);
+							Send(userList[j], bf);
 						}
 					}
 				}
@@ -169,12 +170,12 @@ infoType getInfoType(std::string s1) {
 	return infoType::Unknown;
 }
 
-void Send(TCPsocket tcp, std::string s) {
-	int bytesSent = SDLNet_TCP_Send(tcp, s.c_str(), s.length() + 1);
+void Send(User* u, std::string s) {
+	int bytesSent = SDLNet_TCP_Send(u->socket, s.c_str(), s.length() + 1);
 
 	if (bytesSent < s.length() + 1) {
-		cerr << "SDLNet TCP Send error: " << SDLNet_GetError() << endl;
-		return;
+		//cerr << "SDLNet TCP Send error: " << SDLNet_GetError() << endl;
+		std::remove(userList.begin(), userList.end(), u);
 	}
 }
 
@@ -188,5 +189,6 @@ std::string Receive(TCPsocket tcp,bool pause) {
 			return std::string(buffer);
 		}
 	}
+	SDLNet_FreeSocketSet(socketSet);
 	return "";
 }

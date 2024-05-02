@@ -186,6 +186,7 @@ std::string Receive(TCPsocket tcp, bool pause) {
 	SDLNet_SocketSet socketSet = SDLNet_AllocSocketSet(1);
 	SDLNet_AddSocket(socketSet, reinterpret_cast<SDLNet_GenericSocket>(tcp));
 	if (SDLNet_CheckSockets(socketSet, 0) != 0 || pause) {
+		SDLNet_FreeSocketSet(socketSet);
 		char buffer[1024];
 		int bytesRead = SDLNet_TCP_Recv(tcp, buffer, sizeof(buffer));
 		if (bytesRead > 0) {
